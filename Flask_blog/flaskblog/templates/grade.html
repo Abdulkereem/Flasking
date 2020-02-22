@@ -4,8 +4,10 @@
 {% for user in users %}
 <h1>{{ user.first_name + ' ' + user.last_name }} </h1>
 <div class="content-section">
+    
     <form method="POST" action="" enctype="multipart/form-data">
       {{ form.hidden_tag() }}
+      <input type="hidden" id="userid" name="userid" value='{{ user.id }}'>
       <fieldset class="form-group">
           <legend class="border-bottom mb-4">{{ legend }}</legend>
           <div class="form-group">

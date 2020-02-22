@@ -28,10 +28,10 @@ def grade():
     print(users)
  
     if form.validate_on_submit():
-        
-        grade = Grade(title=form.grade_title.data, score=form.grade_score.data)
+        grade = Grade(title=form.grade_title.data, score=form.grade_score.data, user_id=request.form['userid'])
         db.session.add(grade)
         db.session.commit()
+        return redirect(url_for('home'))
     return render_template('grade.html', users=users, form=form)
 
 
