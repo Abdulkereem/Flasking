@@ -4,9 +4,9 @@ from PIL import Image
 from flask import render_template, url_for, flash, redirect, request, abort
 from flaskblog import app, db, bcrypt, mail
 from flaskblog.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
-                             PostForm, RequestResetForm, ResetPasswordForm)
+                             PostForm, RequestResetForm, ResetPasswordForm, InsertGradeForm)
 from flask_user import roles_required                             
-from flaskblog.models import User, Post, Grades
+from flaskblog.models import User, Post, Grade
 from flask_login import login_user, current_user, logout_user, login_required
 from flask_mail import Message
 
@@ -19,12 +19,18 @@ def home():
     print(posts)
     return render_template('home.html', posts=posts)
 
-@app.route("/grades",  methods=['GET', 'POST'])
+@app.route("/grade",  methods=['GET', 'POST'])
 @login_required
-def grades():
+def grade():
+    form = InsertGradeForm()
     page = request.args.get('page', 1, type=int)
     users = User.query.all()
     print(users)
+ 
+    if form.validate_on_submit():
+        grade = Grade(title=form.grade_title.data, score=form.grade_score.data)
+        db.session.add(grade)
+        db.session.commit()
     return render_template('grades.html', users=users)
 
 
