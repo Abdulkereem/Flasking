@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>{{ class_name }} </h1>
+
+
+
+<!-- <a href="{{ url_for('classGrade', class_access=class_value) }}"><h1> {{ class_name }} </h1></a> -->
+<form action="{{ url_for('updateScores') }}" method="post">
+    {% if gradetitle != '' %}
+    <h2>{{ gradetitle }} </h2>
+<input type="hidden" id="gradetitle" name="gradetitle" value='{{ gradetitle }}'>
+    {% else %}
+    <input id="gradetitle" placeholder='Reason' name="gradetitle" value='{{ gradetitle }}'>
+    {% endif %}
+<input type="hidden" id="class_value" name="class_value" value='{{ class_value }}'>
+<table style="width:100%">
+    <tr>
+      <th>First Name</th>
+      <th>Last Name</th>
+      <th>Score</th>
+    </tr>
+    {% for student_id, student_first, student_second, score in scores %}
+    <tr>
+      <td>{{ student_first }}</td>
+      <td>{{ student_second }}</td>
+      <td><input type="text" name="{{ student_id }}" id="{{ student_id }}" value="{{ score }}"></td>
+    </tr>
+    {% endfor %}
+
+  </table>
+
+
+  <input type="submit">
+</form>
+{% endblock content %}
+

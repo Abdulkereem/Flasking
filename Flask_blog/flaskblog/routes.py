@@ -3,7 +3,7 @@ import secrets
 from PIL import Image
 from flask import render_template, url_for, flash, redirect, request, abort
 from flaskblog import app, db, bcrypt, mail
-from flaskblog.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
+from flaskblog.forms import (STUDENT_CODE, TEACHER_CODE, RegistrationForm, LoginForm, UpdateAccountForm,
                              PostForm, RequestResetForm, ResetPasswordForm, InsertGradeForm)
 from flask_user import roles_required                             
 from flaskblog.models import User, Post, Grade
@@ -13,27 +13,87 @@ from flask_mail import Message
 
 @app.route("/")
 @app.route("/home")
+@login_required
 def home():
     page = request.args.get('page', 1, type=int)
-    posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
-    print(posts)
+    if current_user.user_type != 'teacher':
+        posts = Post.query.filter_by(access=current_user.access).order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
+    else:
+        posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
     return render_template('home.html', posts=posts)
 
 @app.route("/grade",  methods=['GET', 'POST'])
 @login_required
 def grade():
-    form = InsertGradeForm()
-    page = request.args.get('page', 1, type=int)
-    users = User.query.all()
-    print(users)
- 
-    if form.validate_on_submit():
-        grade = Grade(title=form.grade_title.data, score=form.grade_score.data, user_id=request.form['userid'])
-        db.session.add(grade)
-        db.session.commit()
-        return redirect(url_for('home'))
-    return render_template('grade.html', users=users, form=form)
+    if current_user.user_type == 'teacher':
+        return render_template('grade.html', classes=STUDENT_CODE)
+    
+    grades = Grade.query.filter_by(user_id=current_user.id).all()
+    print(current_user.id)
+    print(grades)
+    return render_template('myGrades.html', grades=grades)
 
+@app.route("/grade/<string:class_access>", methods=['GET'])
+@login_required
+def classGrade(class_access):
+    if current_user.user_type != 'teacher':
+        return redirect(url_for('home'))
+
+    students = User.query.filter_by(access=class_access).all()
+    student_ids = [s.id for s in students]
+    grades = Grade.query.all()
+    names = set([g.title for g in grades if g.user_id in student_ids])
+    return render_template('class_grades.html', gradetitles=names, class_value=class_access, class_name=STUDENT_CODE[class_access])
+
+@app.route("/grade/<string:class_access>/<string:gradetitle>", methods=['GET'])
+@login_required
+def classAllGrades(class_access, gradetitle):
+    if current_user.user_type != 'teacher':
+        return redirect(url_for('home'))
+
+    students = User.query.filter_by(access=class_access).all()
+    student_ids = [s.id for s in students]
+    grades = dict([(g.user_id, g.score) for g in Grade.query.filter_by(title=gradetitle).all()])
+    newGradesList = [(s.id, s.first_name, s.last_name, 0 if s.id not in grades else grades[s.id]) for s in students]
+    return render_template('grades.html', scores=newGradesList, class_value=class_access, class_name=STUDENT_CODE[class_access], gradetitle=gradetitle)
+
+@app.route("/grade/new/<string:class_access>", methods=['GET'])
+@login_required
+def classNewGrades(class_access):
+    if current_user.user_type != 'teacher':
+        return redirect(url_for('home'))
+    students = User.query.filter_by(access=class_access).all()
+    newGradesList = [(s.id, s.first_name, s.last_name, 0) for s in students]
+    return render_template('grades.html', scores=newGradesList, class_value=class_access, class_name=STUDENT_CODE[class_access], gradetitle='')
+
+    
+
+
+@app.route("/grade/update", methods=['POST'])
+@login_required
+def updateScores():
+    # print(list(request.form.keys()))
+    # print(request.form['score'])
+    gradetitle = request.form['gradetitle']
+    class_value = request.form['class_value']
+    for k, v in request.form.items():
+        if k == 'gradetitle' or k == 'class_value':
+            continue
+        student_id = int(k)
+        try:
+            score = int(v)
+        except ValueError:
+            flash('One of the scores is not a number.', 'danger')
+            return redirect(request.url)
+        grade = Grade.query.filter_by(user_id=current_user.id, title=gradetitle).first()
+        if grade:
+            grade.score = score
+        else:
+            grade = Grade(title=gradetitle, score=score, user_id=student_id)
+            print(f'{student_id}, {score}')
+            db.session.add(grade)
+        db.session.commit()
+    return redirect(url_for('classAllGrades', class_access=class_value, gradetitle=gradetitle))
 
 
 @app.route("/about")
@@ -47,12 +107,16 @@ def register():
         return redirect(url_for('home'))
     form = RegistrationForm()
     if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = User(username=form.username.data, email=form.email.data, password=hashed_password, first_name=form.first_name.data, last_name=form.last_name.data)
-        db.session.add(user)
-        db.session.commit()
-        flash('Your account has been created! You are now able to log in', 'success')
-        return redirect(url_for('login'))
+        if form.secretcode.data not in TEACHER_CODE and form.secretcode.data not in STUDENT_CODE.keys():
+            flash('Register failed. Wrong register code.', 'danger')
+        else:
+            hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+            user = User(username=form.username.data, email=form.email.data, password=hashed_password, first_name=form.first_name.data, last_name=form.last_name.data,
+                        access=form.secretcode.data, user_type='student' if form.secretcode.data not in TEACHER_CODE else 'teacher')
+            db.session.add(user)
+            db.session.commit()
+            flash('Your account has been created! You are now able to log in', 'success')
+            return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
 
 
@@ -119,16 +183,17 @@ def account():
 def new_post():
     form = PostForm()
     if form.validate_on_submit():
-        post = Post(title=form.title.data, content=form.content.data, author=current_user)
+        post = Post(title=form.title.data, content=form.content.data, author=current_user, access=form.target_class.data)
         db.session.add(post)
         db.session.commit()
         flash('Your post has been created!', 'success')
         return redirect(url_for('home'))
     return render_template('create_post.html', title='New Post',
-                           form=form, legend='New Post')
+                           form=form, legend='New Post', access=STUDENT_CODE)
 
 
 @app.route("/post/<int:post_id>")
+@login_required
 def post(post_id):
     post = Post.query.get_or_404(post_id)
     return render_template('post.html', title=post.title, post=post)
@@ -167,6 +232,7 @@ def delete_post(post_id):
 
 
 @app.route("/user/<string:username>")
+@login_required
 def user_posts(username):
     page = request.args.get('page', 1, type=int)
     user = User.query.filter_by(username=username).first_or_404()

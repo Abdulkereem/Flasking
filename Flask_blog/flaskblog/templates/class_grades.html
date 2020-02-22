@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1>{{ class_name }} </h1>
+{% for gradetitle in gradetitles %}
+<a href="{{ url_for('classAllGrades', class_access=class_value, gradetitle = gradetitle) }}"><h2> {{ gradetitle }} </h2></a>
+
+{% endfor %}
+<a href="{{ url_for('classNewGrades', class_access=class_value) }}">New</a>
+{% endblock content %}

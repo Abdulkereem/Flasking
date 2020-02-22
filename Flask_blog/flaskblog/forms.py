@@ -1,10 +1,16 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from flask_login import current_user
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, SelectField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flaskblog.models import User
 
+STUDENT_CODE = {
+    'classA' : "Class A",
+    'Bclass' : "Class B"
+}
+
+TEACHER_CODE = ['teacher1']
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username',
@@ -18,7 +24,9 @@ class RegistrationForm(FlaskForm):
                            validators=[DataRequired(), Length(min=2, max=20)])    
     last_name = StringField('Last Name',
                            validators=[DataRequired(), Length(min=2, max=20)])    
+    secretcode = StringField('Secret Register Code', validators=[DataRequired(), Length(min=2, max=20)])   
     submit = SubmitField('Sign Up')
+
 
     def validate_username(self, username):
         user = User.query.filter_by(username=username.data).first()
@@ -62,6 +70,7 @@ class UpdateAccountForm(FlaskForm):
 
 class PostForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
+    target_class = SelectField('To class', choices=list(STUDENT_CODE.items()))
     content = TextAreaField('Content', validators=[DataRequired()])
     submit = SubmitField('Post')
 

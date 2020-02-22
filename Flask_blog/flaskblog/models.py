@@ -15,6 +15,10 @@ class Grade(db.Model):
     score = db.Column(db.Integer, nullable=False)
     date_added = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
+    def __repr__(self):
+        return f"Grade('{self.id}', '{self.user_id}', '{self.title}', '{self.score}', '{self.date_added}')"
+
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
@@ -24,6 +28,8 @@ class User(db.Model, UserMixin):
     posts = db.relationship('Post', backref='author', lazy=True)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
+    access = db.Column(db.String(50), nullable=False)
+    user_type = db.Column(db.String(50), nullable=False)
 
     def get_reset_token(self, expires_sec=1800):
         s = Serializer(app.config['SECRET_KEY'], expires_sec)
@@ -39,7 +45,7 @@ class User(db.Model, UserMixin):
         return User.query.get(user_id)
 
     def __repr__(self):
-        return f"User('{self.username}', '{self.first_name}', '{self.last_name}', '{self.email}', '{self.image_file}')"
+        return f"User('{self.username}', '{self.first_name}', '{self.last_name}', '{self.email}', '{self.image_file}', '{self.access}', '{self.user_type}' )"
 
 
 class Post(db.Model):
@@ -48,6 +54,7 @@ class Post(db.Model):
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     content = db.Column(db.Text, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    access = db.Column(db.String(20), nullable=False)
 
     def __repr__(self):
         return f"Post('{self.title}', '{self.date_posted}')"

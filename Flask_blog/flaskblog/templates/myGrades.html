@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<a href="{{ url_for('classGrade', class_access=class_value) }}"><h1> {{ class_name }} </h1></a>
+
+<table style="width:100%">
+    <tr>
+        <th>Date Uploaded</th>
+        <th>Title</th>
+        <th>Score</th>
+    </tr>
+
+    {% for grade in grades %}
+    <tr>
+      <td>{{ grade.date_added.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+      <td>{{ grade.title }}</td>
+      <td>{{ grade.score }}</td>
+    </tr>
+    {% endfor %}
+
+  </table>
+
+{% endblock content %}
