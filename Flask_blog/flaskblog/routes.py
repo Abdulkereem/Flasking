@@ -28,10 +28,11 @@ def grade():
     print(users)
  
     if form.validate_on_submit():
+        
         grade = Grade(title=form.grade_title.data, score=form.grade_score.data)
         db.session.add(grade)
         db.session.commit()
-    return render_template('grades.html', users=users)
+    return render_template('grade.html', users=users, form=form)
 
 
 

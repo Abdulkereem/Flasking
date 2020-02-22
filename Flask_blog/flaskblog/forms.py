@@ -84,6 +84,6 @@ class ResetPasswordForm(FlaskForm):
     submit = SubmitField('Reset Password')
 
 class InsertGradeForm(FlaskForm):
-    title = StringField('Title', validators=[DataRequired()])
-    score = StringField('Score', validators=[DataRequired()])
+    grade_title = StringField('Title', validators=[DataRequired()])
+    grade_score = StringField('Score', validators=[DataRequired()])
     submit = SubmitField('Add grade')
