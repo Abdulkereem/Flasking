@@ -16,7 +16,17 @@ from flask_mail import Message
 def home():
     page = request.args.get('page', 1, type=int)
     posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)
+    print(posts)
     return render_template('home.html', posts=posts)
+
+@app.route("/grades",  methods=['GET', 'POST'])
+@login_required
+def grades():
+    page = request.args.get('page', 1, type=int)
+    users = User.query.all()
+    print(users)
+    return render_template('grades.html', users=users)
+
 
 
 @app.route("/about")
@@ -53,6 +63,7 @@ def login():
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
+
 
 
 @app.route("/logout")

@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block content %}
+{% for user in users %}
+  {% if user.last_name == 'Nowak' %}
+<article class="media content-section">
+
+  <div class="media-body">
+    <div class="article-metadata">
+      <a class="mr-2" href="{{ url_for('grades') }}">{{ user.first_name + ' ' + user.last_name }}</a>
+
+    </div>
+  </div>
+</article>
+  {% endif %}
+{% endfor %}
+{% endblock content %}
